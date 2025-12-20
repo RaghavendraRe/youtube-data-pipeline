@@ -1,0 +1,55 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local test files
+test_*.py
+*_local.csv
+*.log
+
+# Keep data directory but ignore temp files
+data/*.tmp
+data/*.bak
+
+# Environment variables (if using .env file)
+.env
+.env.local
+
+# Old/backup CSV files (keep only the main one)
+brahmakumaris_videos_v*.csv
+brahmakumaris_videos[0-9]*.csv

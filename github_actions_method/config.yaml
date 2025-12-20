@@ -1,0 +1,56 @@
+# YouTube Data Collection Configuration
+# This file contains non-sensitive configuration
+# Sensitive data (API keys) should be in environment variables or GitHub Secrets
+
+youtube:
+  channel_id: "UCUDKhNE_Y_DVkFx1nFNZTWQ"  # Brahmakumaris
+  channel_name: "Brahmakumaris"
+  
+  # Data collection settings
+  days_history: 730  # 2 years
+  max_results_per_page: 50
+  
+  # Official podcast playlists to track
+  official_podcasts:
+    - "Mindful Moments | Brahma Kumaris Podcast"
+    - "Climate Wisdom - COP30 Belem, Brasil"
+    - "The Spiritual Empress - Dadi Prakashmani"
+    - "COP 29 Baku - Climate Wisdom | Brahma Kumaris"
+    - "Care, Share, Inspire - Climate Wisdom from COP28 Dubai"
+    - "Companion of God - Dadi Janki (with English Translation)"
+
+output:
+  directory: "data"
+  filename: "brahmakumaris_videos.csv"
+  encoding: "utf-8-sig"  # For Excel compatibility
+  
+  # Fields to include in CSV
+  fields:
+    - "Video ID"
+    - "Video URL"
+    - "Title"
+    - "Description"
+    - "Published Date"
+    - "Duration (Sec)"
+    - "Duration (ISO)"
+    - "Is Short"
+    - "Is Live"
+    - "Video Type"
+    - "Views"
+    - "Likes"
+    - "Comments"
+    - "Engagement"
+    - "Engagement Rate"
+    - "Tags"
+    - "All Playlists"
+    - "Podcast Name"
+    - "Category ID"
+    - "Channel Title"
+    - "Definition (HD/SD)"
+    - "Live Start"
+    - "Live End"
+    - "Last Updated"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(levelname)s - %(message)s"

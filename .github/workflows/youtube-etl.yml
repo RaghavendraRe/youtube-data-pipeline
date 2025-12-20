@@ -1,0 +1,88 @@
+name: YouTube Data Collection ETL
+
+# Schedule: Run daily at midnight UTC (5:30 AM IST)
+# Can also be triggered manually from Actions tab
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at 00:00 UTC
+  workflow_dispatch:  # Allows manual trigger
+  push:
+    branches:
+      - main  # Run on push to main (for testing)
+    paths:
+      - 'fetch_youtube_data.py'
+      - '.github/workflows/youtube-etl.yml'
+
+jobs:
+  collect-youtube-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper commits
+      
+      # Step 2: Set up Python
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'  # Cache pip dependencies
+      
+      # Step 3: Install dependencies
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # Step 4: Run the ETL script
+      - name: Fetch YouTube Data
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+        run: |
+          python fetch_youtube_data.py
+      
+      # Step 5: Commit and push the updated CSV
+      - name: Commit and push data
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Add only the data file
+          git add data/brahmakumaris_videos.csv
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Auto-update YouTube data - $(date +'%Y-%m-%d %H:%M:%S UTC')"
+            git push
+          fi
+      
+      # Step 6: Upload artifact (for download/inspection)
+      - name: Upload CSV as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-data-${{ github.run_number }}
+          path: data/brahmakumaris_videos.csv
+          retention-days: 30
+      
+      # Step 7: Create job summary
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## YouTube Data Collection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Date**: $(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f data/brahmakumaris_videos.csv ]; then
+            LINE_COUNT=$(wc -l < data/brahmakumaris_videos.csv)
+            VIDEO_COUNT=$((LINE_COUNT - 1))
+            FILE_SIZE=$(du -h data/brahmakumaris_videos.csv | cut -f1)
+            echo "- **Videos Collected**: $VIDEO_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **File Size**: $FILE_SIZE" >> $GITHUB_STEP_SUMMARY
+          fi

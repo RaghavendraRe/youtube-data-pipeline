@@ -1,0 +1,55 @@
+POWER BI SINGLE-PAGE DASHBOARD TIPS
+=====================================
+
+DATA PREPARATION (Power Query)
+------------------------------
+1. Handling Tags & Categories:
+   - Your 'tags' and 'podcast_name' columns use "|" as a separator.
+   - Action: Right-click the column -> Split Column -> By Delimiter -> Select "|" -> Select "Split into Rows" (Advanced options).
+   - Why: This allows you to slice/filter the entire dashboard by a specific tag or podcast topic.
+
+2. Date Handling:
+   - Ensure 'publishedAt' is set to "Date/Time" or just "Date" type.
+   - Create a separate "Calendar Table" and link it to 'publishedAt' for better time-intelligence functions (MOM growth, etc.).
+
+3. Text Handling:
+   - The file is UTF-8-SIG, so Hindi text (titles/descriptions) will display correctly. No action needed here.
+
+DAX MEASURES (Key Performance Indicators)
+-----------------------------------------
+Create these measures for your top "Card" visuals:
+
+1. Total Views = SUM( 'Videos'[viewCount] )
+2. Avg Engagement Rate = AVERAGE( 'Videos'[engagement_rate] )
+3. Total Videos = COUNTROWS( 'Videos' )
+4. Video Mix % = 
+   VAR TotalVids = COUNTROWS('Videos')
+   RETURN DIVIDE(COUNTROWS('Videos'), CALCULATE(COUNTROWS('Videos'), ALL('Videos')), 0)
+   (Use this to show % of content that is Shorts vs Long form)
+
+VISUALIZATION STRATEGY (Single Page Layout)
+-------------------------------------------
+Since you only want ONE page, organize it efficiently:
+
+[ TOP SECTION - HEADLINES ]
+- 4-5 Big Number Cards: Total Views, Total Subscribers (if manual), Avg Engagement, Total Videos.
+- Add a "Date Slicer" (Relative Date: Last 30 Days / Last Year) in the top-right corner.
+
+[ MIDDLE SECTION - TRENDS & PERFORMANCE ]
+- Line Chart: "Views Over Time" (Axis: publishedAt, Values: viewCount).
+  *Tip: Add a 'Zoom Slider' to this chart for detailed inspection.*
+- Clustered Bar Chart: "Avg Views by Video Type" (X-axis: video_type, Y-axis: Average of viewCount).
+  *Insight: Quickly see if Shorts or Long-form content performs better.*
+
+[ BOTTOM SECTION - DEEP DIVE ]
+- Table Visual: LIST of Top Videos.
+  Columns: Title, Video Type, Published Date, Views, Engagement Rate.
+  *Sort by Views desc.*
+- Bar Chart or Treemap: "Top Topics/Podcasts".
+  Use the split 'podcast_name' column here to see which themes get the most traction.
+
+DESIGN & USABILITY
+------------------
+- Filters Panel: Put less common filters (like 'is_live', 'duration_seconds') in the slide-out Filters pane to save canvas space.
+- Tooltips: Create a custom tooltip page that shows the Video Description/Thumbnail when you hover over a video title in the trend line.
+- Theme: Since the content has spiritual/meditation themes, use a clean, light theme with soft colors (blues/whites) or high-contrast dark mode if that fits your channel branding.
