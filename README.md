@@ -17,7 +17,30 @@ data collection/
 └── README.md                         # This file
 ```
 
-## 🚀 Quick Start
+## � How it Works
+
+```mermaid
+graph TD
+    A[🕒 Scheduled Daily (00:00 UTC)] -->|Trigger| B(GitHub Actions Runner)
+    B -->|Setup| C{Python Environment}
+    C -->|Install| D[Dependencies]
+    D -->|Run Script| E[fetch_youtube_data.py]
+    
+    E -->|Request Data| F((YouTube Data API))
+    F -->|Return JSON| E
+    
+    E -->|Process & Transform| G[/brahmakumaris_videos.csv/]
+    G -->|Commit & Push| H[GitHub Repository]
+    
+    H -->|Raw URL Connection| I[Power BI Dashboard]
+    I -->|Scheduled Refresh| J[Auto-Updated Reports]
+
+    style A fill:#f9f,stroke:#333
+    style F fill:#ff0000,stroke:#333,color:white
+    style I fill:#f2c811,stroke:#333
+```
+
+## �🚀 Quick Start
 
 ### 1️⃣ Initialize GitHub Repository
 
