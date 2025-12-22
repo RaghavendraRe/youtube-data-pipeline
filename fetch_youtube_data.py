@@ -7,7 +7,8 @@ import json
 import sys
 
 # Configuration - Use environment variables for sensitive data
-API_KEY = os.getenv("YOUTUBE_API_KEY", "AIzaSyBM5DU838aPORBzQE7L3Hv1q7PVGSEQlGU")  # Fallback for local testing
+# Configuration - Use environment variables for sensitive data
+API_KEY = os.getenv("YOUTUBE_API_KEY") 
 CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "UCUDKhNE_Y_DVkFx1nFNZTWQ")  # Brahmakumaris
 
 # Output configuration
