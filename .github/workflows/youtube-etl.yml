@@ -52,7 +52,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           
           # Add only the data file
-          git add data/brahmakumaris_videos.csv
+          git add data/*.csv
           
           # Check if there are changes to commit
           if git diff --staged --quiet; then
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: youtube-data-${{ github.run_number }}
-          path: data/brahmakumaris_videos.csv
+          path: data/*.csv
           retention-days: 30
       
       # Step 7: Create job summary
