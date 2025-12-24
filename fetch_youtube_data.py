@@ -5,6 +5,10 @@ import re
 import os
 import json
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration - Use environment variables for sensitive data
 # Configuration - Use environment variables for sensitive data
@@ -116,12 +120,21 @@ def map_videos_to_playlists(playlists):
                 
     return video_map
 
-def fetch_videos(uploads_playlist_id, podcast_map):
+def fetch_videos(uploads_playlist_id):
     videos = []
     next_page_token = None
-    two_years_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=730)
+    import yaml
+    import yaml
+    try:
+        with open("config.yaml", "r") as f:
+            config = yaml.safe_load(f)
+            days_history = config["youtube"].get("days_history", 730)
+    except:
+        days_history = 36500 # Default to full history if config fails
+        
+    two_years_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days_history)
     
-    print(f"Fetching videos from the last 2 years (since {two_years_ago.date()})...")
+    print(f"Fetching videos from the last {days_history} days (since {two_years_ago.date()})...")
     
     while True:
         url = get_service_url("playlistItems") + f"&playlistId={uploads_playlist_id}&part=snippet,contentDetails&maxResults=50"
@@ -150,7 +163,7 @@ def fetch_videos(uploads_playlist_id, podcast_map):
             break
             
         # Fetch detailed stats for these videos
-        videos_details = get_video_details(video_ids, podcast_map)
+        videos_details = get_video_details(video_ids)
         videos.extend(videos_details)
         
         print(f"Fetched {len(videos)} videos so far...")
@@ -161,16 +174,7 @@ def fetch_videos(uploads_playlist_id, podcast_map):
             
     return videos
 
-OFFICIAL_PODCAST_TITLES = [
-    "Mindful Moments | Brahma Kumaris Podcast",
-    "Climate Wisdom - COP30 Belem, Brasil",
-    "The Spiritual Empress - Dadi Prakashmani",
-    "COP 29 Baku - Climate Wisdom | Brahma Kumaris",
-    "Care, Share, Inspire - Climate Wisdom from COP28 Dubai",
-    "Companion of God - Dadi Janki (with English Translation)"
-]
-
-def get_video_details(video_ids, podcast_map):
+def get_video_details(video_ids):
     url = get_service_url("videos") + f"&id={','.join(video_ids)}&part=snippet,contentDetails,statistics,liveStreamingDetails"
     response = requests.get(url)
     data = response.json()
@@ -197,9 +201,6 @@ def get_video_details(video_ids, podcast_map):
         engagement = like_count + comment_count
         engagement_rate = (engagement / view_count) if view_count > 0 else 0
 
-        # Tags
-        tags = "|".join(snippet.get("tags", []))
-        
         # Type Logic
         video_type = "Long"
         is_short = False
@@ -219,30 +220,12 @@ def get_video_details(video_ids, podcast_map):
              dt = datetime.datetime.fromisoformat(published_at.replace("Z", "+00:00"))
              published_at = dt.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Podcast Logic
-        all_playlist_names = podcast_map.get(vid, [])
-        all_playlists_str = "|".join(all_playlist_names) if all_playlist_names else ""
-        
-        # Filter for Official Podcasts
-        # We use a loose match to ensure we catch them (e.g., if title changes slightly)
-        found_officials = []
-        for pl_name in all_playlist_names:
-            # Check if this playlist name matches any of our known official titles
-            # We normalize simpler checks
-            for official_title in OFFICIAL_PODCAST_TITLES:
-                # Check for exact or very close substring match
-                if official_title in pl_name or pl_name in official_title:
-                   if pl_name not in found_officials:
-                       found_officials.append(pl_name)
-
-        official_podcast_str = "|".join(found_officials) if found_officials else None
-
         # Create Record with User-Requested Column Names
+        # Description, Tags, Playlists, Podcast Name, Category ID REMOVED as per request
         record = {
             "Video ID": vid,
             "Video URL": f"https://www.youtube.com/watch?v={vid}",
             "Title": snippet.get("title", ""),
-            "Description": snippet.get("description", ""),
             "Published Date": published_at,
             "Duration (Sec)": duration_seconds,
             "Duration (ISO)": duration_iso,
@@ -254,10 +237,7 @@ def get_video_details(video_ids, podcast_map):
             "Comments": comment_count,
             "Engagement": engagement,
             "Engagement Rate": round(engagement_rate, 4),
-            "Tags": tags,
-            "All Playlists": all_playlists_str,       # Renamed from podcast_name
-            "Podcast Name": official_podcast_str,     # NEW: Only official podcasts
-            "Category ID": snippet.get("categoryId", ""),
+            "Channel ID": snippet.get("channelId", ""),
             "Channel Title": snippet.get("channelTitle", ""),
             "Definition (HD/SD)": content_details.get("definition", ""),
             "Live Start": live_streaming.get("actualStartTime", ""),
@@ -292,39 +272,74 @@ def main():
         
         # Validate API key
         if not API_KEY or API_KEY == "":
-            print("❌ ERROR: YOUTUBE_API_KEY environment variable not set!")
+            print(" [ERROR] YOUTUBE_API_KEY environment variable not set!")
             sys.exit(1)
         
-        print(f"✓ API Key: {'*' * 20}{API_KEY[-4:]}")
-        print(f"✓ Channel ID: {CHANNEL_ID}")
-        print(f"✓ Output File: {OUTPUT_FILE}")
+        print(f" [INFO] API Key: {'*' * 20}{API_KEY[-4:]}")
+        print(f" [INFO] Output File: {OUTPUT_FILE}")
         print()
         
-        uploads_id = get_uploads_playlist_id(CHANNEL_ID)
-        print(f"✓ Uploads Playlist ID: {uploads_id}\n")
+        # 1. Load Channels from Excel
+        print("Loading channels from Excel...")
+        from utils.handle_parser import parse_handles_file
+        from utils.handle_parser import parse_handles_file
+        INPUT_FILE = "data/handles_list.xlsx"
         
-        # 1. Fetch Playlists (Podcasts)
-        playlists = get_all_playlists(CHANNEL_ID)
+        channels = parse_handles_file(INPUT_FILE)
         
-        # 2. Map Videos to Playlists
-        podcast_map = map_videos_to_playlists(playlists)
+        if not channels:
+            print(" [ERROR] No channels found. Exiting.")
+            sys.exit(1)
+            
+        all_videos = []
+        total_channels = len(channels)
         
-        # 3. Fetch Main Videos with mapping
-        videos = fetch_videos(uploads_id, podcast_map)
+        print(f" [START] Starting collection for {total_channels} channels...")
         
-        save_to_csv(videos, OUTPUT_FILE)
+        # 2. Iterate through each channel
+        for i, channel in enumerate(channels, 1):
+            try:
+                cid = channel['channel_id']
+                cname = channel['name']
+                wing = channel['wing']
+                
+                print(f"\n[{i}/{total_channels}] Processing: {cname} ({cid}) - [{wing}]")
+                
+                # Fetch Uploads Playlist ID
+                try:
+                    uploads_id = get_uploads_playlist_id(cid)
+                except Exception as e:
+                    print(f"  [SKIP] Skipping {cname}: {e}")
+                    continue
+
+                # Fetch Main Videos (No podcast mapping needed anymore)
+                videos = fetch_videos(uploads_id)
+                
+                # Enrich Data with Wing and Entity Name
+                for v in videos:
+                    v['Wing'] = wing
+                    v['Entity Name'] = cname
+                    
+                all_videos.extend(videos)
+                print(f"  [OK] Added {len(videos)} videos from {cname}")
+                
+            except Exception as e:
+                print(f"  [ERROR] Error processing channel {cname}: {e}")
+
+        # 3. Save Combined Data
+        save_to_csv(all_videos, OUTPUT_FILE)
         
         print()
         print("="*60)
-        print(f"✅ SUCCESS: Collected {len(videos)} videos")
-        print(f"✅ Saved to: {OUTPUT_FILE}")
+        print(f" [DONE] SUCCESS: Collected {len(all_videos)} videos")
+        print(f" [DONE] Saved to: {OUTPUT_FILE}")
         print(f"Completed at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60)
         
     except Exception as e:
         print()
         print("="*60)
-        print(f"❌ ERROR: {e}")
+        print(f" [ERROR] {e}")
         print("="*60)
         sys.exit(1)
 

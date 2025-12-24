@@ -1,27 +1,56 @@
-# GitHub Actions YouTube Data Pipeline
+# GitHub Actions# YouTube Data Pipeline (Multi-Channel Edition)
 
-This directory contains an automated YouTube data collection pipeline using GitHub Actions.
+This project automates the data collection for **39+ Brahma Kumaris YouTube Channels**, organizing them by "Wing" and "Entity Name" for Power BI reporting.
 
-## 📁 Project Structure
+## 🚀 Features (Phase 1 Complete)
+- **Multi-Channel Support**: dynamically reads channel list from `data/handles_list.xlsx`.
+- **Full History**: Fetches up to 100 years of video history.
+- **Smart Schema**:
+    - **Fact Table**: `data/brahmakumaris_videos.csv` (86,000+ rows) - Granular video metrics.
+    - **Dimension Table**: `data/channel_summary_audit.csv` - Channel-level stats (Subscribers, Wings).
+- **Optimized**: Fast execution (~10 mins) with reduced API usage.
 
+## 📂 Project Structure
 ```
-data collection/
-├── .github/
-│   └── workflows/
-│       └── youtube-etl.yml          # GitHub Actions workflow
+├── fetch_youtube_data.py   # Main ETL script (fetches videos)
+├── fetch_channel_audit.py  # Audit script (fetches subs/channel stats)
+├── config.yaml             # Configuration (API keys, settings)
+├── requirements.txt        # Python dependencies
 ├── data/
-│   └── brahmakumaris_videos.csv     # Output data (auto-updated)
-├── fetch_youtube_data.py             # Python ETL script
-├── requirements.txt                  # Python dependencies
-├── config.yaml                       # Configuration file
-└── README.md                         # This file
+│   ├── brahmakumaris_videos.csv  # The BIG data file
+│   ├── channel_summary_audit.csv # Channel Master list
+│   └── handles_list.xlsx         # Input list of channels
+└── utils/
+    └── handle_parser.py    # Helper to read Excel inputs
 ```
 
-## � How it Works
+## 🛠️ Setup
+1.  **Clone the Repo**:
+    ```bash
+    git clone <repo-url>
+    ```
+2.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  **Configure**:
+    - Add your `YOUTUBE_API_KEY` to `.env` file.
+    - Ensure `data/handles_list.xlsx` is present.
 
-```mermaid
-graph TD
-    A["🕒 Scheduled Daily (00:00 UTC)"] -->|Trigger| B("GitHub Actions Runner")
+## 🏃‍♂️ Usage
+**To collect all video data:**
+```bash
+python fetch_youtube_data.py
+```
+**To valid/audit channel list:**
+```bash
+python fetch_channel_audit.py
+```
+
+## 📊 Power BI Instructions
+1.  Import both CSV files from `data/`.
+2.  Link them using **Channel ID**.
+3.  Use "Wing" and "Entity Name" as Slicers.  A["🕒 Scheduled Daily (00:00 UTC)"] -->|Trigger| B("GitHub Actions Runner")
     B -->|Setup| C{"Python Environment"}
     C -->|Install| D["Dependencies"]
     D -->|Run Script| E["fetch_youtube_data.py"]

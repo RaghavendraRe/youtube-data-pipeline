@@ -7,29 +7,15 @@ youtube:
   channel_name: "Brahmakumaris"
   
   # Data collection settings
-  days_history: 730  # 2 years
+  # Data collection settings
+  days_history: 36500  # 100 years (Full History)
   max_results_per_page: 50
   
-  # Official podcast playlists to track
-  official_podcasts:
-    - "Mindful Moments | Brahma Kumaris Podcast"
-    - "Climate Wisdom - COP30 Belem, Brasil"
-    - "The Spiritual Empress - Dadi Prakashmani"
-    - "COP 29 Baku - Climate Wisdom | Brahma Kumaris"
-    - "Care, Share, Inspire - Climate Wisdom from COP28 Dubai"
-    - "Companion of God - Dadi Janki (with English Translation)"
-
-output:
-  directory: "data"
-  filename: "brahmakumaris_videos.csv"
-  encoding: "utf-8-sig"  # For Excel compatibility
-  
-  # Fields to include in CSV
+  # Users Requested Fields
   fields:
     - "Video ID"
     - "Video URL"
     - "Title"
-    - "Description"
     - "Published Date"
     - "Duration (Sec)"
     - "Duration (ISO)"
@@ -41,10 +27,7 @@ output:
     - "Comments"
     - "Engagement"
     - "Engagement Rate"
-    - "Tags"
-    - "All Playlists"
-    - "Podcast Name"
-    - "Category ID"
+    - "Channel ID"
     - "Channel Title"
     - "Definition (HD/SD)"
     - "Live Start"
